@@ -1,0 +1,52 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and run P2",
+            "type": "shell",
+            "command": "loadp2.exe",
+            "args": [
+                "-b 230400",
+                "-t ",
+                "${fileDirname}/build/${fileBasenameNoExtension}.binary"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": ["Build FlexSpin Propeller P2 Program"]
+        },
+        {
+            "type": "cppbuild",
+            "label": "Build FlexSpin Propeller P2 Program",
+            "command": "flexcc.exe",
+            "args": [
+                "-2",
+                "-O1",
+                "-I",
+                "${workspaceFolder}/include",
+                "-I",
+                "${workspaceFolder}/spin",
+                "-I",
+                "${workspaceFolder}",
+                "-o",
+                "${fileDirname}/build/${fileBasenameNoExtension}.binary",
+                "${file}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "compiler: flexcc.exe"
+        }
+    ]
+}

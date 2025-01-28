@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "FlexProp",
+            "includePath": [
+                "C:/Programs/FlexProp/flexprop-6.9.10/flexprop/include",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/spin",
+                "${workspaceFolder}"
+            ],
+            "compilerPath": "",
+            "cStandard": "c99",
+            "intelliSenseMode": "clang-arm64",
+            "compilerArgs": [
+            ],
+            "cppStandard": "c++98"
+        }
+    ],
+    "version": 4
+}
