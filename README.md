@@ -20,6 +20,15 @@ Should you choose to use the flexprop IDE, you would need to add these to your i
 ## Using (VSCode)
 VSCode doesn't love the flex specific syntax in files. The recommended extensions will give you syntax highlights, but will also complain with red squiggles under valid flex style code. you may disable the underline squiggles for C code with the ctrl+shift+p > "C/C++: Disable Error Squiggles" command, if you like.
 
+Before compiling, ensure flexcc.exe and loadp2 are on your system path, and go into the .vscode\c_cpp_properties.json file to change the line which reads:
+
+#### c_cpp_properties.json
+```
+"C:/your/path/to/flexprop/include", 
+```
+
+to be the path to your flexprop install's include file.
+
 The easiest way to debug your code is to just try building it and debugging the old fashioned way.
 
 Currently two tasks are configured for compiling and loading the code to a P2, and these tools will only work with flexcc/flexprop
