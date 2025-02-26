@@ -8,8 +8,11 @@
             "type": "shell",
             "command": "loadp2.exe",
             "args": [
-                "-b 230400",
-                "-t ",
+                "-b",
+                "230400",
+                "-t",
+                "-p",
+                "COM5",
                 "${fileDirname}/build/${fileBasenameNoExtension}.binary"
             ],
             "problemMatcher": [],
@@ -26,6 +29,10 @@
             "args": [
                 "-2",
                 "-O1",
+                "-I",
+                "${workspaceFolder}/HASP_25_C/src",
+                "-I",
+                "${workspaceFolder}/HASP_25_C/include",
                 "-I",
                 "${workspaceFolder}/include",
                 "-I",

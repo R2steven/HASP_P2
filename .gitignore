@@ -2,4 +2,4 @@
 /build
 
 # c_cpp_properties folder with user specific path
-.vscode\c_cpp_properties.json
+.vscode/c_cpp_properties.json
