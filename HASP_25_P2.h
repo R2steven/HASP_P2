@@ -4,7 +4,4 @@
 #include "config.h"
 
 
-void something();
-
-
 #endif

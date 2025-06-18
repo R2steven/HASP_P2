@@ -1,0 +1,59 @@
+
+VAR
+    x
+    y
+    sw
+    pin_X
+    pin_Y
+    x_med
+    y_med
+    pin_sw
+    timeout
+    joystick[3]
+
+OBJ
+    jstk_X : "jm_ez_analog"
+    jstk_Y : "jm_ez_analog"
+
+PUB null() 'not a top level module
+
+'starts a joystick object. sets the three pins starting at pinStart,
+'the poll rate, and the lo and high signal outputs.
+'rate should be in HZ
+PUB start(pinStart, rate, lo, hi) | i
+
+    pin_X := pinStart
+    pin_Y := pinStart+1
+    pin_sw :=pinStart+2
+
+    jstk_X.start(pin_X, lo, hi)
+    jstk_Y.start(pin_Y, lo, hi)
+
+    waitms(10)
+
+    repeat i from 0 to 1000
+        x := jstk_X.read()
+        y := jstk_Y.read()
+
+        x_med := (x_med + x) / 2
+        y_med := (y_med + y) / 2
+
+        waitus(100)
+
+    timeout := 1/rate * 10^6 'convert microseconds
+
+PUB poll() : readings 'read the joystick valuse and then wait for the specified amount of time to achieve poll rate
+
+    joystick[x] := jstk_x.read() 'read analox x value
+    joystick[y] := jstk_y.read() 'read analog y value
+    joystick[sw] := pinr(pin_sw) 'read digital switch value
+    waitus(timeout)
+    return joystick
+
+PUB read() : readings 'read the joystick values and immediately return.
+                      'client program should probably implement their own wait function.
+
+    joystick[x] := jstk_x.read() 'read analox x value
+    joystick[y] := jstk_y.read() 'read analog y value
+    joystick[sw] := pinr(pin_sw) 'read digital switch value
+    return joystick

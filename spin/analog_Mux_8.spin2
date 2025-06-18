@@ -1,0 +1,108 @@
+
+'Ryan Stevens 2025
+'restevens52@gmail.com
+'
+'module for interfacing with an 8 channel analog multiplexer. designed for the TI DC4051BE multiplexer.
+
+CON
+    VOLTAGE_LOW = 0
+    VOLTAGE_HIGH = 3300
+
+VAR
+    pin_A
+    pin_B
+    pin_C
+    pin_signal
+    pinINH
+    timeout
+    low
+    high
+    readings[8]
+
+OBJ analog:"jm_ez_analog"
+
+pub null() 'this is not a top level object
+
+'usTimeout is an int in microseconds
+PUB start(pinA, useINH, usTimeout) : initialized'initializes the MUX_8 object
+
+    pin_A := pinA
+    pin_B := pinA+1
+    pin_C := pinA+2
+    pin_signal := pinA+3
+    timeout := usTimeout
+    low := VOLTAGE_LOW
+    high := VOLTAGE_HIGH
+
+    if(useINH)
+        pinINH := pinA+4
+    else
+        pinINH := -1
+
+    analog.start(pin_signal, low, high)
+
+    return 1
+
+PUB startCstmRange(pinA, useINH, usTimeout, lo, hi) : initialized'initializes the MUX_8 object
+
+    pin_A := pinA
+    pin_B := pinA+1
+    pin_C := pinA+2
+    pin_signal := pinA+3
+    timeout := usTimeout
+    low := lo
+    high := hi
+
+    if(useINH)
+        pinINH := pinA+4
+    else
+        pinINH := -1
+
+    analog.start(pin_signal, low, high)
+
+    return 1
+
+PUB startCstm(pinA, pinB, pinC, pinInhibit, pinSignal, usTimeout, lo, hi) : initialized 'initialize specifying all parameters
+
+    pin_A := pinA
+    pin_B := pinB
+    pin_C := pinC
+    pinINH := pinInhibit
+    pin_signal := pinSignal
+    timeout := usTimeout
+    low := lo
+    high := hi
+
+    analog.start(pin_signal, low, high)
+
+    return 1
+
+PUB select(pinSEL) 'select an analog channel on the MUX8 and allow signal to stablize by waiting for timeout uSeconds
+
+    pinwrite(pin_A, pinSEL & $0001)
+    pinwrite(pin_B, (pinSEL & $0002) >> 1)
+    pinwrite(pin_C, (pinSEL & $0004) >> 2)
+
+    if(pinINH > 0)
+        pinwrite(pinINH, 0)
+
+    waitus(timeout)
+
+PUB read(pinSEL) : voltage 'read the value of a given pin and return it. also modifies the readings[] array
+
+    if(pinSEL > 7)
+        debug(`input select out of range!)
+        return -1
+
+    select(pinSEL)
+    readings[pinSEL] := analog.read()
+    return readings[pinSel]
+
+PUB poll() : pollReadings | i
+
+    repeat i from 0 to 7
+        select(i)
+        readings[i] := analog.read()
+
+    return readings
+

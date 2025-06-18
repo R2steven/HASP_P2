@@ -10,17 +10,19 @@
 #error this demo is for P2 only 
 #endif
 
-/**
- * flexprop specific goofyness that c syntax doesn't like.
- * 
- * This line will import the SmartSerial.spin library for use in this file
- */  
-struct __using("spin/SmartSerial") ser;
+#define STEP                    0b1111111111111110
+#define TWO_STEP                0b1111110011111110
+#define THREE_STEP              0b1110011110011110
+#define FOUR_STEP               0b1100111001100110
+#define SIX_STEP_OVERDRIVE      0b1011011011011011
 
 uint32_t _txmode = 0b00000000000000000000000001111100; //async tx mode, output enabled for smart output
 
 int main() {
     _clkset(_SETFREQ, _CLOCKFREQ);
+
+    //ser.start();
+    //ser.tx("Hi");
 
     if(square(2)==4)printf("%d", 4);
 
@@ -47,26 +49,53 @@ int main() {
       // calculate smartpin mode for 16 bits per character
     uint32_t bit_mode = 15 + (bitperiod << 16);
 
-    _pinstart(0,_txmode,bit_mode, 0);
+    _pinstart(0,_txmode,bit_mode,0);
 
     _pinh(1);
 
-    _pinl(2);
+    _pinl(2); 
+
+    _pinstart(4,_txmode,bit_mode,0);
+
+    _pinh(5);
+
+    _pinl(6);
+
+    _pinstart(8,_txmode,bit_mode,0);
+
+    _pinh(9);
+
+    _pinl(10);
+
+    _pinstart(12,_txmode,bit_mode,0);
+
+    _pinh(13);
+
+    _pinl(14);
+
+    int blink = 0;
 
     for(;;) {
-
         //uart starts high, 0 low, 3.3 high, little endian, start bit low, stop bit high
-        _wypin(0,0b1011011011011011);//uart start bit low, end bit high
+        _wypin(0,FOUR_STEP);//uart start bit low, end bit high
 
-        #define SIX_STEP_OVERDRIVE  high 0b1011011011011011 low
-        #define FOUR_STEP_DRIVE 0b1001100110110110
+        _wypin(4,0b1000110001100110);//uart start bit low, end bit high
+
+        _wypin(8,0b0111001110011001);//uart start bit low, end bit high
+
+        _wypin(12,0b0111001110011001);//uart start bit low, end bit high
+
+        blink++;
+
+        if(blink == 1000000) {
+            printf("Running!");
+            _pinnot(56);
+            blink = 0;
+        }
 
         // example does not 0b1111101111
 
         //_waitus(100);
+        //printf("Running!");
     }
-}
-
-void something(){
-  main();
 }
