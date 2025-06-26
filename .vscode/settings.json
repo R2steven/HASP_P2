@@ -1,5 +1,15 @@
 {
     "files.associations": {
-        "cog.h": "c"
+        "cog.h": "c",
+        "hasp_25_p2.h": "c",
+        "propeller.h": "c",
+        "propeller2.h": "c",
+        "stdio.h": "c",
+        "test.h": "c",
+        "p2es_clock.h": "c",
+        "p2_clock.h": "c",
+        "propeller1.h": "c",
+        "config.h": "c",
+        "stdlib.h": "c"
     }
 }

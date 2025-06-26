@@ -11,11 +11,11 @@
 struct __using("spin/jm_fullduplexserial.spin2") Pi_uart; //TODO: break out into comms module
 
 //TODO: split these into headers to hide common method names hopefully
-#include "photodiodes.c" //TODO: make a header with a runSteering() method or something
+#include "src/drivers/photodiodes.c" //TODO: make a header with a runSteering() method or something
 
-#include "thermistors.c" //TODO: make a header with a runTemp() method or simething
+#include "src/drivers/thermistors.c" //TODO: make a header with a runTemp() method or simething
 
-#include "motorDriver.c"//TODO: modify home() function to use limit switches. add gear ration functionality
+#include "motors.h"//TODO: modify home() function to use limit switches. add gear ration functionality
 
 //struct __using("spin/jm_i2c.spin2") solar1;
 
@@ -37,7 +37,12 @@ int main() {
 
     _pinh(0);
 
+    unsigned char stack[128];
+    
+    __builtin_cogstart(runMotors(), stack);
+
     for(int i = 0; i < 10000; i++) {
+
         _pinnot(56);
         Pi_uart.fstr0("Hello World From Propeller!\n");
         getTempMessage(str, 200);
@@ -45,6 +50,7 @@ int main() {
         readuart(recieved,Pi_uart.available());
         printf(recieved);
         _waitms(500);
+        printf("prop main loop!\n");
     }
 }
 

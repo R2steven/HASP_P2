@@ -2,8 +2,6 @@
 
 #include "HASP_25_P2.h"
 
-#include "test.h"
-
 #define DEBUG
 
 // we only need to support P2, 
@@ -20,7 +18,7 @@
  * 
  * This line will import the ez_analog library for use in this file
  */  
-typedef struct __using("spin/jm_ez_analog") ez_analog;
+typedef struct __using("spin/jm_ez_analog.spin2") ez_analog;
 
 typedef struct rdAnalogMux8 {
     int8_t pin_A;
@@ -112,15 +110,6 @@ rdAnalogMux8 *init(uint8_t pin_A, uint8_t useINH) {
     return ret;
 }**/
 
-typedef struct counter {
-    int val;
-    void setval(int x) {
-    val = x;
-    }
-    int getval() { return val; }
-    int incval() { return ++val; }
-    } Counter;
-
 int main() {
 
     int pin_A = 0;
@@ -148,6 +137,10 @@ int main() {
     printf("Counter x: %d\n", x.getval());*/
 
     _pinl(3);
+    _pinl(5);
+    _pinh(6);
+
+
 
     int *readings = diodeArray.getReadBuff();
     for(;;) {

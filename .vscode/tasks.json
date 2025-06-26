@@ -13,7 +13,7 @@
                 "-t",
                 "-p",
                 "COM5",
-                "${fileDirname}/build/${fileBasenameNoExtension}.binary"
+                "${workspaceFolder}/build/${fileBasenameNoExtension}.binary"
             ],
             "problemMatcher": [],
             "group": {
@@ -23,6 +23,44 @@
             "dependsOn": ["Build FlexSpin Propeller P2 Program"]
         },
         {
+            "label": "Build and flash P2",
+            "type": "shell",
+            "command": "loadp2.exe",
+            "args": [
+                "-b",
+                "230400",
+                "-FLASH",
+                "-p",
+                "COM5",
+                "${workspaceFolder}/build/${fileBasenameNoExtension}.binary"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": ["Build FlexSpin Propeller P2 Program"]
+        },
+        {
+            "label": "Build and flash HASP25 to P2",
+            "type": "shell",
+            "command": "loadp2.exe",
+            "args": [
+                "-b",
+                "230400",
+                "-FLASH",
+                "-p",
+                "COM5",
+                "${workspaceFolder}/build/${fileBasenameNoExtension}.binary"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": ["Build HASP25 Propeller P2 Program"]
+        },
+        {
             "type": "cppbuild",
             "label": "Build FlexSpin Propeller P2 Program",
             "command": "flexcc.exe",
@@ -30,9 +68,34 @@
                 "-2",
                 "-O1",
                 "-I",
-                "${workspaceFolder}/HASP_25_C/src",
+                "${workspaceFolder}/include",
                 "-I",
-                "${workspaceFolder}/HASP_25_C/include",
+                "${workspaceFolder}/spin",
+                "-I",
+                "${workspaceFolder}",
+                "-o",
+                "${workspaceFolder}/build/${fileBasenameNoExtension}.binary",
+                "${file}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "compiler: flexcc.exe"
+        },
+        {
+            "type": "cppbuild",
+            "label": "Build HASP25 Propeller P2 Program",
+            "command": "flexcc.exe",
+            "args": [
+                "-2",
+                "-O1",
                 "-I",
                 "${workspaceFolder}/include",
                 "-I",
@@ -40,8 +103,8 @@
                 "-I",
                 "${workspaceFolder}",
                 "-o",
-                "${fileDirname}/build/${fileBasenameNoExtension}.binary",
-                "${file}"
+                "${workspaceFolder}/build/${fileBasenameNoExtension}.binary",
+                "${workspaceFolder}/HASP_25_P2_V1_0.c"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

@@ -3,17 +3,19 @@
 #error this demo is for P2 only 
 #endif
 
+#include <stdint.h>
+
 #include "config.h"
 
 // SIX_STEP_OVERDRIVE  high 0b1011011011011011 low
 // FOUR_STEP_DRIVE 0b1001100110110110
 
-#define STEP                    0b0111111111111111
-#define TWO_STEP                0b0111111100111111
-#define THREE_STEP              0b0111100111100111
-#define FOUR_STEP               0b0111001110011001
-#define FIVE_STEP_OVERDRIVE     0b0110011001101101
-#define SIX_STEP_OVERDRIVE      0b1101101101101101
+#define STEP                    0b1000000000000000
+#define TWO_STEP                0b1000001100000000
+#define THREE_STEP              0b1000011000011000
+#define FOUR_STEP               0b1000110001100110 
+#define FIVE_STEP_OVERDRIVE     0b1001100110010010
+#define SIX_STEP_OVERDRIVE      0b1011011011011011
 
 
 uint32_t _txmode = 0b00000000000000000000000001111100; //async tx mode, output enabled for smart output
@@ -52,10 +54,17 @@ int main() {
 
     _pinl(2);
 
+
+    uint16_t base_pin;
+    uint16_t tx_pin = base_pin;
+    uint16_t dir_pin = base_pin+1;
+    uint16_t MF_pin = base_pin+2;
+
+
     for(;;) {
 
         //uart starts high, 0 low, 3.3 high, little endian, start bit low, stop bit high
-        _wypin(0,0b1011011011011011);//uart start bit low, end bit high
+        _wypin( tx_pin,0b1011011011011011);//uart start bit low, end bit high
 
 
 

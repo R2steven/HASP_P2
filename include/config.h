@@ -5,6 +5,7 @@
 
 
 #include <propeller.h> // include P2 lib
+#include <stdint.h>
 
 // set compiler flag for P2
 #ifndef __P2__
@@ -18,5 +19,9 @@
 #ifndef _BAUD
 #define _BAUD 230400 // comms baud
 #endif
+
+
+#define true 1
+#define false 0
 
 #endif

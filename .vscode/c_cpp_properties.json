@@ -3,7 +3,8 @@
         {
             "name": "FlexProp",
             "includePath": [
-                "C:/your/path/to/flexprop/include", 
+                "C:/Programs/FlexProp/flexprop-6.9.10/flexprop/include",
+                "${workspaceFolder}/HASP_25_C/include",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/spin",
                 "${workspaceFolder}"
