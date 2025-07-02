@@ -1,5 +1,8 @@
 /**
- * motor module, meant to be run in a separate core
+ * Author: Ryan Stevens
+ * 
+ * HASP25 Motor thread. configures and runs the SpectraSolis Motors, as well as 
+ * provides a place to tune the motor parameters.
  */
 
 #ifndef HASP25_MOTOR_MODULE
@@ -7,6 +10,40 @@
 
 #include "config.h"
 #include "deque.h"
+#include "charDeque.h"
+
+// motor IDs
+#define ALL_CMD 0x57
+#define ALT_ID 0xB5
+#define AZ_ID 0xBD
+#define MIR_ID 0xD5
+
+typedef struct motorCommand {
+    int cmd; //command to execute
+    //   command table:
+    //   ID:        DESC:
+    #define MSTEP 1
+    //    1           execute the step command utilizing only step value for step
+    //                    and direction
+    #define DEG  2
+    //    2           execute the spin degree command utilizing only Deg value 
+    //                    for step and direction
+    #define STEPDIR 3
+    //    3           execute step command utilizing step and dir values
+    #define DEGDIR 4
+    //    4           execute sspin degree command utilizing ged and dir values
+    #define HOME 5
+    //    5           execute the homing subroutine
+    #define INIT 6
+    //    6           execute initialization of the motor
+    #define GETPOS 7 //only defined for ALL_CMD
+    //    7           prompt the motors to transmit their current position
+
+    int step; //steps parameter (can be negative)
+    float degree; //degree parameter (can be negative)
+    int direction; //direction parameter (must be 1 or -1)
+}motorCommand;
+
 
 struct A {
     /////////////////////
@@ -19,8 +56,8 @@ struct A {
     const uint8_t altNumSw; //number of limit switches
     const float altdegmin; //degree minimum limit
     const float altdegmax; //degree maximim limit
-    const uint8_t altSPR; //alt steps per revolution
-    const uint8_t altRatio; //3 to 1 gear Ratio (gear down)
+    const int altSPR; //alt steps per revolution
+    const float altRatio; //3 to 1 gear Ratio (gear down)
 
     /////////////////////
     // Azimuth constants M4
@@ -32,8 +69,8 @@ struct A {
     const uint8_t aziNumSw;
     const float azidegmin;
     const float azidegmax;
-    const uint8_t aziSPR; //azi steps per revolution
-    const uint8_t aziRatio; //6 to 1 gear Ratio (gear down)
+    const int aziSPR; //azi steps per revolution
+    const float aziRatio; //6 to 1 gear Ratio (gear down)
 
     /////////////////////
     // Instrument Mirror constants
@@ -47,15 +84,15 @@ struct A {
     const uint8_t mirrorNumSw;
     const float mirrordegmin;
     const float mirrordegmax;
-    const uint8_t mirrorSPR; //mirror steps per revolution
-    const uint8_t mirrorRatio; //60 to 1 gear Ratio (gear down)
+    const int mirrorSPR; //mirror steps per revolution
+    const float mirrorRatio; //60 to 1 gear Ratio (gear down)
 
 };
 
 struct A MOTOR_CONSTS = {
-    34, //.altStep    alt step pin
-    35, //.altDiralt dir pin
-    36, //.altMF alt enable pin (enable on low)
+    36, //.altStep    alt step pin
+    35, //.altDir alt dir pin
+    34, //.altMF alt enable pin (enable on low)
     {6,7}, //.altSwitches limit switch pins
     2, //.altNumSw number of limit switches
     0.0, //.altdegmin degree minimum limit
@@ -66,9 +103,9 @@ struct A MOTOR_CONSTS = {
     /////////////////////
     // Azimuth constants M4
     /////////////////////
-    37, //.azi Stepazi step pin
+    39, //.azi Stepazi step pin
     38, //.azi Dirazi dir pin
-    39, //.aziMF azi enable pin (enable on low)
+    37, //.aziMF azi enable pin (enable on low)
     {30,0}, //.aziSwitches limit switch pins
     1, //.aziNumSw
     -360.0, //.azidegmin
@@ -99,8 +136,9 @@ struct A MOTOR_CONSTS = {
  * returns a pointer to a recieve buffer. pointer[0] should always be
  * a uint16_t integer denoting the buffer size excluding the size
  */
-Deque *initMotors() __fromfile("src/motors.c");
+charDeque *initMotors() __fromfile("src/motors.c");
 
+void setMotorTx(charDeque *tx) __fromfile("src/sensors.c");
 
 /**
  * enter the motor control loop. intended to be run as a thread

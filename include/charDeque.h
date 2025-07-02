@@ -23,8 +23,8 @@
  *          instead of storing pointers and enabling move semantics.
  */
 
-#ifndef DEQUE_H
-#define DEQUE_H
+#ifndef CHARDEQUE_H
+#define CHARDEQUE_H
 
 #include <export.h>
 #include <stdlib.h>
@@ -36,16 +36,15 @@
 /**
  * Deque data instance. stores Deque data members
  */
-typedef struct Deque{
-    void* data; //dynamically allocated data array
+typedef struct charDeque{
+    char* data; //dynamically allocated data array
     void (*myFreeFunc)(void*); // stored free function for destruction
-    uint8_t dataSize; //size of dataMembers in Bytes
-    size16_t queueSize; //size of underlying data array in dataItems
+    size16_t queueSize;
     size16_t size; // current size of deque in dataItems
     size16_t head; // next available head
     size16_t tail; // next available tail
     uint8_t threadLock;
-}Deque;
+}charDeque;
 
 /**
  * allocates required memory for dequeue construction and initilizes the 
@@ -56,7 +55,7 @@ typedef struct Deque{
  * @param queueSize the size of the desired queue
  * @param sizeOfData the size of each data object stored in queue in bytes
  */
-EXPORT Deque *initDeque(uint16_t queueSize, uint8_t sizeOfData) __fromfile("src/util/deque.c");
+EXPORT charDeque *initCharDeque(uint16_t queueSize) __fromfile("src/util/charDeque.c");
 
 /**
  * allocates required memory for dequeue construction and initilizes the 
@@ -72,13 +71,14 @@ EXPORT Deque *initDeque(uint16_t queueSize, uint8_t sizeOfData) __fromfile("src/
  * @param queueSize the size of the desired queue
  * @param sizeOfData the size of each data object stored in queue
  */
-Deque *initDequeCalloc(void *(*myCallocFunc)(size_t,size_t), void (*myFreeFunc)(void*),
-                    size_t queueSize, uint8_t sizeOfData) __fromfile("src/util/deque.c");
+/**Deque *initCharDequeCalloc(void *(*myCallocFunc)(size_t,size_t), void (*myFreeFunc)(void*),
+                    size_t queueSize, uint8_t sizeOfData) __fromfile("src/util/charDeque.c");
+*/
 
 /**
  * perform all necessary operations to destroy the deque and free its memory
  */
-EXPORT void destroyDeque(Deque *deque) __fromfile("src/util/deque.c");
+EXPORT void destroyCharDeque(charDeque *deque) __fromfile("src/util/charDeque.c");
 
 /**
  * Insert item on the right of the dequeue. Operating over an allocated array of 
@@ -88,7 +88,14 @@ EXPORT void destroyDeque(Deque *deque) __fromfile("src/util/deque.c");
  * @param *item pointer to memory of size deque->dataSize to copy into queue MUST
  *          BE SAME DATA SIZE AS deque->dataSize
  */
-bool8_t insertRight(Deque *deque, void *item) __fromfile("src/util/deque.c");
+bool8_t insertRightCharDeque(charDeque *deque, char item) __fromfile("src/util/charDeque.c");
+
+/**
+ * Insert an array of chars
+ * 
+ * TODO: currently bugged bc it will happily add an array over the size limit
+ */
+bool8_t insertRightArrCharDeque(charDeque *deque, char *item, int length) __fromfile("src/util/charDeque.c");
 
 /**
  * Remove item on the left of the dequeue, and move it into ret pointer. 
@@ -100,7 +107,13 @@ bool8_t insertRight(Deque *deque, void *item) __fromfile("src/util/deque.c");
  *          accept data of size deque->dataSize
  * @return flag indicating the sucess of the operation
  */
-bool8_t removeLeft(Deque *deque, void *ret) __fromfile("src/util/deque.c");
+bool8_t removeLeftCharDeque(charDeque *deque, char *ret) __fromfile("src/util/charDeque.c");
+
+
+/**
+ * dequeue an array of chars
+ */
+bool8_t removeLeftArrCharDeque(charDeque *deque, char *item, int length) __fromfile("src/util/charDeque.c");
 
 /**
  * Remove item on the right of the dequeue, and move it into ret pointer. 
@@ -112,7 +125,7 @@ bool8_t removeLeft(Deque *deque, void *ret) __fromfile("src/util/deque.c");
  *          accept data of size deque->dataSize
  * @return flag indicating the sucess of the operation
  */
-bool8_t removeRight(Deque *deque, void *ret) __fromfile("src/util/deque.c");
+bool8_t removeRightCharDeque(charDeque *deque, char *ret) __fromfile("src/util/charDeque.c");
 
 /**
  * Push an item onto the stack reprisented by this deque.
@@ -121,7 +134,7 @@ bool8_t removeRight(Deque *deque, void *ret) __fromfile("src/util/deque.c");
  * @param *item pointer to memory of size deque->dataSize to copy into queue MUST
  *          BE SAME DATA SIZE AS deque->dataSize
  */
-EXPORT bool8_t dqPush(Deque *deque, void *item) __fromfile("src/util/deque.c");
+EXPORT bool8_t dqPushCharDeque(charDeque *deque, char item) __fromfile("src/util/charDeque.c");
 
 /**
  * Pop an item from the top of the stack reprisented by this deque, and move its
@@ -131,7 +144,7 @@ EXPORT bool8_t dqPush(Deque *deque, void *item) __fromfile("src/util/deque.c");
  * @param *ret pointer to memory of size deque->dataSize to move returned data to
  *          MUST BE SAME DATA SIZE AS deque->dataSize
  */
-EXPORT bool8_t dqPop(Deque *deque, void *ret) __fromfile("src/util/deque.c");
+EXPORT bool8_t dqPopCharDeque(charDeque *deque, char *ret) __fromfile("src/util/charDeque.c");
 
 /**
  * Enqueue an item into the queue reprisented by this deque.
@@ -140,30 +153,49 @@ EXPORT bool8_t dqPop(Deque *deque, void *ret) __fromfile("src/util/deque.c");
  * @param *item pointer to memory of size deque->dataSize to copy into queue MUST
  *          BE SAME DATA SIZE AS deque->dataSize
  */
-EXPORT bool8_t dqEnqueue(Deque *deque, void *item) __fromfile("src/util/deque.c");
+EXPORT bool8_t dqEnqueueCharDeque(charDeque *deque, char item) __fromfile("src/util/charDeque.c");
 
 /**
- * Dequeue an item from the top of the stack reprisented by this deque, and move its
+ * Enqueue an  array of items into the queue reprisented by this deque.
+ * 
+ * @param *deque data structure containing deque data members
+ * @param *item pointer to memory of size deque->dataSize to copy into queue MUST
+ *          BE SAME DATA SIZE AS deque->dataSize
+ */
+EXPORT bool8_t dqEnqueueArrCharDeque(charDeque *deque, char *item, int len);
+
+/**
+ * Dequeue an item from the front of the queue reprisented by this deque, and move its
  * data into data pointer.
  * 
  * @param *deque data structure containing deque data members
  * @param *ret pointer to memory of size deque->dataSize to move returned data to
  *          MUST BE SAME DATA SIZE AS deque->dataSize
  */
-EXPORT bool8_t dqDequeue(Deque *deque, void *ret) __fromfile("src/util/deque.c");
+EXPORT bool8_t dqDequeueCharDeque(charDeque *deque, char *ret) __fromfile("src/util/charDeque.c");
+
+/**
+ * Dequeue an array of items from the front of the queue reprisented by this deque, and move its
+ * data into data pointer.
+ * 
+ * @param *deque data structure containing deque data members
+ * @param *ret pointer to memory of size deque->dataSize to move returned data to
+ *          MUST BE SAME DATA SIZE AS deque->dataSize
+ */
+EXPORT bool8_t dqDequeueArrCharDeque(charDeque *deque, char *ret, int len);
 
 /**
  * returns a boolean indicating whether the deque is empty
  * 
  * @param *deque data structure containing deque data members
  */
-EXPORT bool8_t isEmpty(Deque *deque) __fromfile("src/util/deque.c");
+EXPORT bool8_t isEmptyCharDeque(charDeque *deque) __fromfile("src/util/charDeque.c");
 
 /**
  * returns a boolean indicating whether the deque is full
  * 
  * @param *deque data structure containing deque data members
  */
-EXPORT bool8_t isFull(Deque *deque) __fromfile("src/util/deque.c");
+EXPORT bool8_t isFullCharDeque(charDeque *deque) __fromfile("src/util/charDeque.c");
 
 #endif

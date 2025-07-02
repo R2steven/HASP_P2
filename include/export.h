@@ -1,3 +1,6 @@
+/**
+ * defining export options, not really needed for HASP25
+ */
 #if defined(_MSC_VER)
     //  Microsoft 
     #define EXPORT __declspec(dllexport)

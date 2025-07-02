@@ -1,3 +1,9 @@
+/**
+ * Author: Ryan Stevens
+ * 
+ * common configuration definitions and macros
+ */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 

@@ -13,12 +13,6 @@
 #include <float.h>
 #include <math.h>
 
-#define DEBUG
-
-#ifdef DEBUG
-    #include <stdio.h>
-#endif
-
 struct __using("spin/analog_Mux_8.spin2") photodiodes;
 
 #define NUM_SENSORS 8

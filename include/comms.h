@@ -1,3 +1,9 @@
+/**
+ * Author: Ryan Stevens
+ * 
+ * HASP25 SpectraSolis propeller comms module. Handles 
+ */
+
 #ifndef HASP25_COMMS_MODULE
 #define HASP25_COMMS_MODULE
 
@@ -6,7 +12,7 @@
 
 Deque *initComms() __fromfile("src/comms.c");
 
-void setMotorTx() __fromfile("src/sensors.c");
+void setCommsTx() __fromfile("src/sensors.c");
 
 void runComms() __fromfile("src/comms.c");
 

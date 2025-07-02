@@ -42,7 +42,7 @@ Deque *initDequeCalloc(void *(*myCallocFunc)(size_t,size_t), void (*myFreeFunc)(
     this->tail = 0;
     this->threadLock = 0;
     this->data = (*myCallocFunc)(queueSize,sizeOfData);
-    this->myFreeFunc = &(*myFreeFunc);
+    this->myFreeFunc = *myFreeFunc;
     return this;
 }
 
@@ -82,10 +82,8 @@ bool8_t removeRight(Deque *deque, void *ret) {
     if(isEmpty(deque)||ret==NULL) {return 0;}
 
     deque->tail = wrapIndex((deque->tail)-1, deque->queueSize);
-    deque->size--;
-
     memmove(ret, idxToPointer(deque, deque->tail),deque->dataSize);
-
+    deque->size--;
     return 1;
 }
 

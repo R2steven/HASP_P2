@@ -1,4 +1,9 @@
-
+/**
+ * Author: Ryan Stevens
+ * 
+ * Sensor thread module, manages and pulls data from all propeller connected 
+ * SpectraSolis instruments. dispatches data to the main computer. 
+ */
 #ifndef HASP_25_SENSORS_H
 #define HASP_25_SENSORS_H
 

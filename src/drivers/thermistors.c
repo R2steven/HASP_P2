@@ -8,8 +8,6 @@
 
 #include <float.h>
 
-#define DEBUG
-
 
 #include <stdio.h>
 

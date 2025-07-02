@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "HASP_25_P2.h"
+#include "charDeque.h"
 
 // we only need to support P2, 
 #ifndef __P2__
@@ -37,20 +38,18 @@ int main() {
 
     _pinh(0);
 
-    unsigned char stack[128];
-    
-    __builtin_cogstart(runMotors(), stack);
+    charDeque* motorRX = initMotors();
+    unsigned char motoStack[8192];
+    __builtin_cogstart(runMotors(), motoStack);
 
     for(int i = 0; i < 10000; i++) {
-
-        _pinnot(56);
         Pi_uart.fstr0("Hello World From Propeller!\n");
         getTempMessage(str, 200);
         pollDiode(buff);
         readuart(recieved,Pi_uart.available());
         printf(recieved);
         _waitms(500);
-        printf("prop main loop!\n");
+        //printf("prop main loop!\n");
     }
 }
 
