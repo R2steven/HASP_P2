@@ -10,6 +10,7 @@
         "p2_clock.h": "c",
         "propeller1.h": "c",
         "config.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "hashmap.h": "c"
     }
 }

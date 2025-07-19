@@ -7,7 +7,7 @@
 
 #ifdef TEST_RXCHECK
 int main() {
-    charDeque *motors = initMotors();
+    Motor_consts *motors = initMotors();
 
     char commandALT[45] = {0};
     sprintf(commandALT,"%d, %d, %.4f\n\0",
@@ -60,7 +60,8 @@ void runRxCheck() {
 
 #ifdef TEST_RUNMOTORS
 int main() {
-    charDeque *motors = initMotors();
+    
+    HASP25Motors_t *motors = initMotors();
 
     unsigned char motoStack[16384];
 
@@ -79,12 +80,15 @@ int main() {
     sprintf(commandMIR,"%d, %d, %.4f\n\0",
             MIR_ID, DEG, 180.0
         );
+    
+    _pinh(56);
+    _waitms(1000);
 
     int itrs = 1;
     while(true) {
         _pinnot(56);
-        //printf("%d\n",itrs);
-        motors->threadLock = true;
+        printf("%d\n",itrs);
+        motors->rxBuff->threadLock = true;
         for(int i = 0; i < 17; i++) {
             dqEnqueueCharDeque(motors, commandALT[i]);
         }
@@ -94,8 +98,8 @@ int main() {
         for(int i = 0; i < 18; i++) {
             dqEnqueueCharDeque(motors, commandMIR[i]);
         }
-        motors->threadLock = false;
-        _waitms(20000);
+        motors->rxBuff->threadLock = false;
+        _waitms(1000);
         itrs++;
     }
 }

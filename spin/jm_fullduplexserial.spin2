@@ -75,8 +75,8 @@ con { pst / formatting }
 
 con
 
-  RXBUF_SIZE = 256
-  TXBUF_SIZE = 128
+  RXBUF_SIZE = 512
+  TXBUF_SIZE = 512
 
 
 obj

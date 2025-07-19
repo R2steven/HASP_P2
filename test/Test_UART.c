@@ -9,6 +9,8 @@
 
 struct __using("spin/jm_fullduplexserial.spin2") Pi_uart;
 
+typedef int (*operation_func)(int, int);
+
 int main() {
     Pi_uart.start(0,1,0,9600);
 

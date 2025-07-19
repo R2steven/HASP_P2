@@ -11,6 +11,7 @@
 #include "config.h"
 #include "deque.h"
 #include "charDeque.h"
+#include "src/drivers/motorDriver.c"
 
 // motor IDs
 #define ALL_CMD 0x57
@@ -44,8 +45,15 @@ typedef struct motorCommand {
     int direction; //direction parameter (must be 1 or -1)
 }motorCommand;
 
+typedef struct HASP25Motors_s {
+    Motor_t altitude; // altitude motor
+    Motor_t azimuth; // azimuth motor
+    Motor_t mirror; // mirror motor
+    charDeque *rxBuff; // command buffer
+    charDeque *txBuff;
+}HASP25Motors_t;
 
-struct A {
+typedef struct Motor_consts_s {
     /////////////////////
     // Altitude constants M1
     /////////////////////
@@ -87,9 +95,9 @@ struct A {
     const int mirrorSPR; //mirror steps per revolution
     const float mirrorRatio; //60 to 1 gear Ratio (gear down)
 
-};
+}Motor_consts;
 
-struct A MOTOR_CONSTS = {
+struct Motor_consts_s MOTOR_CONSTS = {
     36, //.altStep    alt step pin
     35, //.altDir alt dir pin
     34, //.altMF alt enable pin (enable on low)
@@ -132,11 +140,8 @@ struct A MOTOR_CONSTS = {
 /**
  * initializes the HASP 25 motors with the defied values and returns a 
  * pointer to it's command recieve buffer
- * 
- * returns a pointer to a recieve buffer. pointer[0] should always be
- * a uint16_t integer denoting the buffer size excluding the size
  */
-charDeque *initMotors() __fromfile("src/motors.c");
+HASP25Motors_t *initMotors() __fromfile("src/motors.c");
 
 void setMotorTx(charDeque *tx) __fromfile("src/sensors.c");
 

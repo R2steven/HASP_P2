@@ -59,6 +59,11 @@ typedef struct Deque{
 EXPORT Deque *initDeque(uint16_t queueSize, uint8_t sizeOfData) __fromfile("src/util/deque.c");
 
 /**
+ * same as initDeque but initializes deque struct at the pointer specified.
+ */
+void initDequeNalloc(Deque *this, uint16_t queueSize, uint8_t sizeOfData) __fromfile("src/util/deque.c");
+
+/**
  * allocates required memory for dequeue construction and initilizes the 
  * resulting data structure.
  * 

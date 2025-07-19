@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include "config.h"
 
+#ifndef HASP25_MOTOR_DRIVER
+#define HASP25_MOTOR_DRIVER
+
 //UART step signals using little endian format
 #define DEF_ONE_STEP            0b1111111000000000
 #define STEP                    0b1111111111111110 //only use this one
@@ -226,4 +229,4 @@ int main() {
 
     spin_deg(alt, 360);
 }*/
-
+#endif

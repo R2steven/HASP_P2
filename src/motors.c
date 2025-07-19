@@ -6,19 +6,9 @@
  */
 
 #include <stdio.h>
-#include "config.h"
 #include "motors.h"
-#include "src/drivers/motorDriver.c"
 #include "stdlib.h"
 
-
-typedef struct HASP25Motors_s {
-    Motor_t altitude; // altitude motor
-    Motor_t azimuth; // azimuth motor
-    Motor_t mirror; // mirror motor
-    charDeque *rxBuff; // command buffer
-    charDeque *txBuff;
-}HASP25Motors_t;
 
 HASP25Motors_t *motorInst;
 uint16_t rxBuffSize = 128;
@@ -30,16 +20,18 @@ uint16_t rxBuffSize = 128;
  * returns a pointer to a recieve buffer. pointer[0] should always be
  * a uint16_t integer denoting the buffer size excluding the size
  */
-charDeque *initMotors() {
+HASP25Motors_t *initMotors() {
 
-    HASP25Motors_t *motors = (HASP25Motors_t*) malloc(sizeof(HASP25Motors_t));
+    motorInst = (HASP25Motors_t*) malloc(sizeof(HASP25Motors_t));
     
     /**
      * altitude motor config
      */
     initMotorCstm(
-        &motors->altitude, 
-        MOTOR_CONSTS.altStep, 
+        &motorInst->altitude, 
+        MOTOR_CONSTS.altStep,   //these include errors are because the compiler is
+                                //motordrivers.c is included in motors.h and 
+                                //linked into this file. stupid compiler
         MOTOR_CONSTS.altDir, 
         MOTOR_CONSTS.altMF, 
         MOTOR_CONSTS.altSwitches, 
@@ -54,7 +46,7 @@ charDeque *initMotors() {
      * azimuth motor config
      */
     initMotorCstm(
-        &motors->azimuth,
+        &motorInst->azimuth,
         MOTOR_CONSTS.aziStep,
         MOTOR_CONSTS.aziDir,
         MOTOR_CONSTS.aziMF,
@@ -70,7 +62,7 @@ charDeque *initMotors() {
      *  mirror motor config
      */
     initMotorCstm(
-        &motors->mirror,
+        &motorInst->mirror,
         MOTOR_CONSTS.mirrorStep,
         MOTOR_CONSTS.mirrorDir,
         MOTOR_CONSTS.mirrorMF,
@@ -84,10 +76,9 @@ charDeque *initMotors() {
     _pinh(MOTOR_CONSTS.mirrorMicroStep1); //set microstep behavior
     _pinh(MOTOR_CONSTS.mirrorMicroStep2); //set microstep behavior
 
-    motorInst = motors;
-    motors->rxBuff = initCharDeque(rxBuffSize);
+    motorInst->rxBuff = initCharDeque(rxBuffSize);
 
-    return motors->rxBuff;
+    return motorInst;
 }
 
 
@@ -131,7 +122,7 @@ void runMotors() {
                 }
                 break;
             case ALT_ID :
-                // printf("alt %d, %f\n\n", cmd.cmd, cmd.degree);
+                printf("alt %d, %f\n\n", cmd.cmd, cmd.degree);
                 //printf("alt commands: %d\n", ++count);
                 dqEnqueue(altCommand, &cmd); // thread lock handled by size var
                 break;
@@ -180,8 +171,8 @@ int rxCheck(motorCommand* ret) {
 
     //motorInst->rxBuff->threadLock = false; //done reading
 
-    //printf(read);
-    //printf("\n");
+    printf(read);
+    printf("\n");
     //printf("%d\n", motorInst->rxBuff->size);
 
     int motoID = atoi(&read[1]);
@@ -249,7 +240,7 @@ void txData() {
 
 }
 
-void runMotor(Motor_t *motor, uint8_t *motRunning, Deque *motCommand) {
+int runMotor(Motor_t *motor, uint8_t *motRunning, Deque *motCommand) {
     
     motorCommand cmd = {0};
     

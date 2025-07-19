@@ -26,6 +26,19 @@ EXPORT Deque *initDeque(uint16_t queueSize, uint8_t sizeOfData) {
     return this;
 }
 
+void initDequeNalloc(Deque *this, uint16_t queueSize, uint8_t sizeOfData) {
+    if(queueSize == 0 || sizeOfData == 0) {return NULL;}
+
+    this->queueSize = queueSize;
+    this->dataSize = sizeOfData;
+    this->size = 0;
+    this->head = 0;
+    this->tail = 0;
+    this->threadLock = 0;
+    this->data = calloc(queueSize,sizeOfData);
+    this->myFreeFunc = &free;
+}
+
 Deque *initDequeCalloc(void *(*myCallocFunc)(size_t,size_t), void (*myFreeFunc)(void*),
                     size_t queueSize, uint8_t sizeOfData) {
 
