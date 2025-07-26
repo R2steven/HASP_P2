@@ -10,7 +10,7 @@
 
 #include "config.h"
 #include "deque.h"
-#include "charDeque.h"
+#include "src/comms.c"
 #include "src/drivers/motorDriver.c"
 
 // motor IDs
@@ -20,6 +20,7 @@
 #define MIR_ID 0xD5
 
 typedef struct motorCommand {
+    int motoId;
     int cmd; //command to execute
     //   command table:
     //   ID:        DESC:
@@ -49,8 +50,14 @@ typedef struct HASP25Motors_s {
     Motor_t altitude; // altitude motor
     Motor_t azimuth; // azimuth motor
     Motor_t mirror; // mirror motor
-    charDeque *rxBuff; // command buffer
-    charDeque *txBuff;
+    Deque *commands; // motor command queue
+    HASP25_Comms *comms; // comms module
+    uint8_t *altStack;
+    uint8_t *azStack;
+    uint8_t *mirrorStack;
+    uint8_t altRunning;
+    uint8_t azRunning;
+    uint8_t mirrorRunning;
 }HASP25Motors_t;
 
 typedef struct Motor_consts_s {
@@ -60,8 +67,8 @@ typedef struct Motor_consts_s {
     const uint8_t altStep; //alt step pin
     const uint8_t altDir; //alt dir pin
     const uint8_t altMF; //alt enable pin (enable on low)
-    int altSwitches[2]; //limit switch pins
-    const uint8_t altNumSw; //number of limit switches
+    const int altsw1; //limit switch pins
+    const int altsw2; //number of limit switches
     const float altdegmin; //degree minimum limit
     const float altdegmax; //degree maximim limit
     const int altSPR; //alt steps per revolution
@@ -73,8 +80,8 @@ typedef struct Motor_consts_s {
     const uint8_t aziStep; //azi step pin
     const uint8_t aziDir; //azi dir pin
     const uint8_t aziMF; //azi enable pin (enable on low)
-    int aziSwitches[2]; //limit switch pins
-    const uint8_t aziNumSw;
+    int azisw1; //limit switch pins
+    int azisw2;
     const float azidegmin;
     const float azidegmax;
     const int aziSPR; //azi steps per revolution
@@ -88,21 +95,21 @@ typedef struct Motor_consts_s {
     const uint8_t mirrorMF;
     const uint8_t mirrorMicroStep1; //mirror microstep1 pin
     const uint8_t mirrorMicroStep2; //mirror microstep2 pin
-    int mirrorSwitches[2]; //limit switch pins
-    const uint8_t mirrorNumSw;
+    int mirrorsw1; //limit switch pins
+    int mirrorsw2;
     const float mirrordegmin;
     const float mirrordegmax;
     const int mirrorSPR; //mirror steps per revolution
     const float mirrorRatio; //60 to 1 gear Ratio (gear down)
 
-}Motor_consts;
+}Motor_consts_t;
 
 struct Motor_consts_s MOTOR_CONSTS = {
     36, //.altStep    alt step pin
     35, //.altDir alt dir pin
     34, //.altMF alt enable pin (enable on low)
-    {6,7}, //.altSwitches limit switch pins
-    2, //.altNumSw number of limit switches
+    6, //.altsw1
+    7, //.altsw2 limit switch pins
     0.0, //.altdegmin degree minimum limit
     47.0, //.altdegmax degree maximim limit
     40000, //.altSPR alt steps per revolution
@@ -114,8 +121,8 @@ struct Motor_consts_s MOTOR_CONSTS = {
     39, //.azi Stepazi step pin
     38, //.azi Dirazi dir pin
     37, //.aziMF azi enable pin (enable on low)
-    {30,0}, //.aziSwitches limit switch pins
-    1, //.aziNumSw
+    30,
+    -1, //.aziSwitches limit switch pins
     -360.0, //.azidegmin
     2*360, //.azidegmax
     40000, //.aziSPR azi steps per revolution
@@ -129,8 +136,8 @@ struct Motor_consts_s MOTOR_CONSTS = {
     -1, //.mirrorMF
     18, //.mirrorMicroStep1 mirror microstep1 pin
     19, //.mirrorMicroStep2 mirror microstep2 pin
-    {31,0}, //.mirrorSwitches limit switch pins
-    1, //.mirrorNumSw
+    31,
+    -1, //.mirrorSwitches limit switch pins
     0.0, //.mirrordegmin
     45.0, //.mirrordegmax
     3200, //.mirrorSPR mirror steps per revolution
@@ -141,13 +148,12 @@ struct Motor_consts_s MOTOR_CONSTS = {
  * initializes the HASP 25 motors with the defied values and returns a 
  * pointer to it's command recieve buffer
  */
-HASP25Motors_t *initMotors() __fromfile("src/motors.c");
-
-void setMotorTx(charDeque *tx) __fromfile("src/sensors.c");
+HASP25Motors_t *initMotors(HASP25_Comms *comms) __fromfile("src/motors.c");
 
 /**
  * enter the motor control loop. intended to be run as a thread
  */
-void runMotors() __fromfile("src/motors.c"); 
+int runMotors() __fromfile("src/motors.c"); 
 
+uint8_t motorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length)__fromfile("src/motors.c");
 #endif

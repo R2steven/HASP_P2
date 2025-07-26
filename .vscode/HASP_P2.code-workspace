@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"name": "HASP_P2",
+			"path": ".."
+		}
+	],
+    "settings": {
+        "files.associations": {
+            "cog.h": "c",
+            "hasp_25_p2.h": "c",
+            "propeller.h": "c",
+            "propeller2.h": "c",
+            "stdio.h": "c",
+            "test.h": "c",
+            "p2es_clock.h": "c",
+            "p2_clock.h": "c",
+            "propeller1.h": "c",
+            "config.h": "c",
+            "stdlib.h": "c",
+            "hashmap.h": "c",
+            "stdint.h": "c",
+            "motors.h": "c"
+        }
+    }
+}

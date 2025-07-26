@@ -35,20 +35,15 @@ typedef struct Motor{
     int MF_PIN; //Motor_t-Free pin
     int minLimit;
     int maxLimit;
-    int LIMIT_SW_PIN[2]; //pin for limit switch
-    int numSW;
+    int limit_min_pin; //pin for limit switch
+    int limit_max_pin; //pin for limit switch
     int interrupt;
     int pos; //steps away from home 
     int steps_in_rev; //num steps in one revolution as derived from ratio 
                       //and motor steps per revolution
+    int target; //target position
     // int LOWER_LIMIT;
     // int UPPER_LIMIT;
-
-
-    //Constructor
-    void (*init)(struct Motor *, int);
-    void (*initCstm)(struct Motor *, int);
-
 
     //Getters and Setters
     void (*set_home)(struct Motor *);
@@ -63,27 +58,26 @@ typedef struct Motor{
 }Motor_t;
 
 
-void initMotor(struct Motor * motor, int Pin1, int* pinSW, int numSW,int deg_min, int deg_max, int steps_per_rev, float ratio) {
-    initMotorCstm(motor, Pin1, Pin1 + 1, Pin1 + 2, pinSW, numSW, deg_min, deg_max, steps_per_rev, ratio);
+void initMotor(struct Motor * motor, int Pin1, int sw1, int sw2,int deg_min, int deg_max, int steps_per_rev, float ratio) {
+    initMotorCstm(motor, Pin1, Pin1 + 1, Pin1 + 2, sw1, sw2, deg_min, deg_max, steps_per_rev, ratio);
 }
 
 //Constructor. maximum of 2 limit switches supported.
-void initMotorCstm(struct Motor * motor, int pinSTP, int pinDIR, int pinMF, int* pinSW, int numSW, int deg_min, int deg_max, int steps_per_rev, float ratio) {
+void initMotorCstm(struct Motor * motor, int pinSTP, int pinDIR, int pinMF, int sw1, int sw2, int deg_min, int deg_max, int steps_per_rev, float ratio) {
 
     motor->PU_PIN = pinSTP;
     motor->DIR_PIN = pinDIR;
     motor->MF_PIN = pinMF;
-    motor->steps_in_rev = (int)(ratio * steps_per_rev);
     motor->minLimit = degToStep(motor, deg_min);
     motor->maxLimit = degToStep(motor, deg_max);
-    motor->numSW = numSW; // max 2
+    motor->limit_min_pin = sw1;
+    motor->limit_max_pin = sw2;
     motor->interrupt = 0;
+    motor->steps_in_rev = (int)(ratio * steps_per_rev);
+    set_home(motor);
+    motor->target = motor->pos;
 
     //printf("ratio %f, spr %d, sir %d\n", ratio, steps_per_rev, motor->steps_in_rev);
-
-    for(int i = 0; i < numSW; i++) {
-        motor->LIMIT_SW_PIN[i] = pinSW[i];
-    }
 
     motor->set_home = &set_home;
     motor->get_pos = &get_pos;
@@ -114,10 +108,8 @@ void set_home(struct Motor * motor) { //set current position to new 0 position
 }
 
 int get_pos(struct Motor * motor) { //get position in steps 
-    return (motor->pos);
+    return motor->pos;
 }
-
-
 
 //Utility
 void step(struct Motor * motor, int steps) {
@@ -135,15 +127,14 @@ void step(struct Motor * motor, int steps) {
     //printf("Steps: %d\n", steps);
 
     for(int i = 0; i < steps; i++) {
-        /**if(pollSwitches(motor) == 1 || // check limit switches
+        if(pollSwitches(motor) == 1 || // check limit switches
             motor->pos + dir*i < motor->minLimit || //check step limits
             motor->pos + dir*i > motor->maxLimit) 
         { // hit a limit
             //printf("hit limit! Pos = %d, max = %d, min = %d, lastStep = %d\n", motor->pos,motor->maxLimit,motor->minLimit,dir*i);
-        interrupt();
         motor->pos = (motor->pos + dir*i) % motor->steps_in_rev; //update pos
         return;
-        }*/
+        }
     
         
         _wypin(motor->PU_PIN,STEP);
@@ -158,6 +149,28 @@ void spin_rev(struct Motor * motor, int revs) {
     int steps = revs * motor->steps_in_rev;
 
     step(motor, steps);
+}
+
+void update_target_deg(struct Motor * motor, float degs) {
+    int steps = degToStep(motor, degs);
+    motor->target+=steps;
+}
+
+void move_toward_target_deg(struct Motor * motor, float degsMax) {
+    int stepsMax = degToStep(motor, degsMax);
+
+    if(stepsMax < 0) {
+        stepsMax*=-1;
+    }
+
+    int distance = motor->target - motor->pos;
+    if(distance < 0) {
+        stepsMax *= -1;
+        step(motor, (((distance) < (stepsMax)) ? stepsMax : distance));
+    }
+    else {
+        step(motor, (((distance) > (stepsMax)) ? stepsMax : distance));
+    }
 }
 
 // void spin_rev(struct Motor * motor, int revs) {
@@ -182,6 +195,7 @@ void home(struct Motor * motor) { //return to home position
     }
 
     motor->step(motor, steps);
+    motor->target = motor->pos;
 }
 
 int rehome(struct Motor * motor) {
@@ -194,25 +208,33 @@ int rehome(struct Motor * motor) {
     }
 
     motor->pos = 0;
+    motor->target = motor->pos;
     return 1;
 }
 
 int pollSwitches(Motor_t *motor) {
     //printf("poll switches!\n");
-    /*for(int i = 0; i < motor->numSW; i++) {
-        //printf("pin %d reading: %d\n",motor->LIMIT_SW_PIN[i],_pinr(motor->LIMIT_SW_PIN[i]));
-        if(_pinr(motor->LIMIT_SW_PIN[i])==1) {
+    if(motor->limit_min_pin != -1) {// if min pin enabled
+        if(motor->limit_max_pin != -1) { //if max pin also enabled
+            if(_pinr(motor->limit_min_pin) != 0 || _pinr(motor->limit_max_pin) != 0) {
+                return 1;
+            }
+        }    
+        else {// if only min pin enabled
+            if(_pinr(motor->limit_min_pin) != 0) {
+                return 1;
+            }
+        }
+    }
+    else if(motor->limit_max_pin != -1) {//if only max pin enabled
+        if(_pinr(motor->limit_max_pin) != 0) {
             return 1;
         }
-        //_waitms(100);
-    }*/
-    return 0;
-}
-
-// TODO: define what motor does when hits limit switch and interrupts. probably 
-// will have to send a message to the pi.
-void interrupt() {
-
+    }
+    else if(motor->limit_min_pin == -1 && motor->limit_max_pin == -1) {//if no pin enabled
+        return 1;
+    }
+    return 0;//no switch triggered
 }
 
 /*

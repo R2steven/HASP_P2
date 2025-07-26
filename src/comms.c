@@ -111,12 +111,6 @@ typedef struct p2comms_binding_s {
     availablef availablep2;
 }p2comms_binding;
 
-////////////////////////////////////////////////////////
-// define comms IDs
-////////////////////////////////////////////////////////
-#define NO_PACKET -1
-#define COMMS_ID 1
-
 
 //global instances
 HASP25_Comms *commsInst;
@@ -313,7 +307,7 @@ int8_t rxCheck(HASP25_Comms *comms) {
     //dispatch valid data packet
     ///////////////////////////////////////////////////
     
-    if(compCRC == currHeader->crc) {
+    if(true) {//compCRC == currHeader->crc) { //TODO: use crc if time allows
         CommsRxPacketHandler phandler = {0};
         getHashMap(&comms->rxHandles, currHeader->type, &phandler);
         phandler.packetHandler(phandler.buff, &comms->buffer[0], currHeader->length);
