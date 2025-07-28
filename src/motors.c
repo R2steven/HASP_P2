@@ -27,14 +27,14 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
      * altitude motor config
      */
     initMotorCstm(
-        &motorInst->altitude, 
+        &(motorInst->altitude), 
         MOTOR_CONSTS.altStep,   //these include errors are because the compiler is
                                 //motordrivers.c is included in motors.h and 
                                 //linked into this file. stupid compiler
         MOTOR_CONSTS.altDir, 
         MOTOR_CONSTS.altMF, 
-        MOTOR_CONSTS.altsw1, 
-        MOTOR_CONSTS.altsw2,
+        MOTOR_CONSTS.altminsw1, 
+        MOTOR_CONSTS.altmaxsw2,
         MOTOR_CONSTS.altdegmin,
         MOTOR_CONSTS.altdegmax,
         MOTOR_CONSTS.altSPR,
@@ -45,12 +45,12 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
      * azimuth motor config
      */
     initMotorCstm(
-        &motorInst->azimuth,
+        &(motorInst->azimuth),
         MOTOR_CONSTS.aziStep,
         MOTOR_CONSTS.aziDir,
         MOTOR_CONSTS.aziMF,
-        MOTOR_CONSTS.azisw1,
-        MOTOR_CONSTS.azisw2,
+        MOTOR_CONSTS.aziminsw1,
+        MOTOR_CONSTS.azimaxsw2,
         MOTOR_CONSTS.azidegmin,
         MOTOR_CONSTS.azidegmax,
         MOTOR_CONSTS.aziSPR,
@@ -61,12 +61,12 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
      *  mirror motor config
      */
     initMotorCstm(
-        &motorInst->mirror,
+        &(motorInst->mirror),
         MOTOR_CONSTS.mirrorStep,
         MOTOR_CONSTS.mirrorDir,
         MOTOR_CONSTS.mirrorMF,
-        MOTOR_CONSTS.mirrorsw1,
-        MOTOR_CONSTS.mirrorsw2,
+        MOTOR_CONSTS.mirrorminsw1,
+        MOTOR_CONSTS.mirrormaxsw2,
         MOTOR_CONSTS.mirrordegmin,
         MOTOR_CONSTS.mirrordegmax,
         MOTOR_CONSTS.mirrorSPR,
@@ -274,13 +274,37 @@ int runMotorold(Motor_t *motor, uint8_t *motRunning, Deque *motCommand) {
 
 int runMotors() {
     motorCommand cmd = {0};
+
+    // uint8_t altStack[8192];
+    // uint8_t azStack[8192];
+    // uint8_t mirStack[8192];
+
+    // __builtin_cogstart(runMotor(&(motorInst->altitude)), altStack);
+    // __builtin_cogstart(runMotor(&(motorInst->azimuth)), azStack);
+    // __builtin_cogstart(runMotor(&(motorInst->mirror)), mirStack);
+
     
+    int itrs = 0;
     while(true) {
         cmd.motoId = -1;
 
         if(motorInst->commands->size > 0) {
             dqDequeue(motorInst->commands, &cmd);
         }
+
+
+        //#define all_test
+        #ifdef all_test
+            if(itrs == 0) {
+                cmd.motoId = ALT_ID;
+                cmd.cmd = DEGDIR;
+                cmd.degree = 3.0;
+                cmd.direction = 1;
+                itrs++;
+                //_waitms(1000);
+            }
+            
+        #endif
         
         switch(cmd.motoId) {
             case ALL_CMD:   executeMotocmd(&motorInst->azimuth, &cmd);
@@ -298,9 +322,16 @@ int runMotors() {
             break;
         }
 
-        move_toward_target_deg(&motorInst->altitude, .01);
-        move_toward_target_deg(&motorInst->azimuth, .01);
-        move_toward_target_deg(&motorInst->mirror, .01);
+        move_toward_target_deg(&(motorInst->altitude), 1);
+        move_toward_target_deg(&(motorInst->azimuth), 1);
+        move_toward_target_deg(&(motorInst->mirror), 1);
+
+    }
+}
+
+int runMotor(Motor_t *motor) {
+    while(true) {
+        move_toward_target_deg(motor, 20);
     }
 }
 

@@ -66,7 +66,7 @@
             "command": "flexcc.exe",
             "args": [
                 "-2",
-                "-O1",
+                "-O0",
                 "-I",
                 "${workspaceFolder}/include",
                 "-I",

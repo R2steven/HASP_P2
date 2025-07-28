@@ -33,9 +33,11 @@ typedef struct motorCommand {
     #define STEPDIR 3
     //    3           execute step command utilizing step and dir values
     #define DEGDIR 4
-    //    4           execute sspin degree command utilizing ged and dir values
+    //    4           execute sspin degree command utilizing deg and dir values
+    //                  $motorID, $commandID, $param1, $param2
     #define HOME 5
     //    5           execute the homing subroutine
+    //                  $motorID, $commandID
     #define INIT 6
     //    6           execute initialization of the motor
     #define GETPOS 7 //only defined for ALL_CMD
@@ -67,8 +69,8 @@ typedef struct Motor_consts_s {
     const uint8_t altStep; //alt step pin
     const uint8_t altDir; //alt dir pin
     const uint8_t altMF; //alt enable pin (enable on low)
-    const int altsw1; //limit switch pins
-    const int altsw2; //number of limit switches
+    const int altminsw1; //limit switch pins
+    const int altmaxsw2; //number of limit switches
     const float altdegmin; //degree minimum limit
     const float altdegmax; //degree maximim limit
     const int altSPR; //alt steps per revolution
@@ -80,8 +82,8 @@ typedef struct Motor_consts_s {
     const uint8_t aziStep; //azi step pin
     const uint8_t aziDir; //azi dir pin
     const uint8_t aziMF; //azi enable pin (enable on low)
-    int azisw1; //limit switch pins
-    int azisw2;
+    int aziminsw1; //limit switch pins
+    int azimaxsw2;
     const float azidegmin;
     const float azidegmax;
     const int aziSPR; //azi steps per revolution
@@ -95,8 +97,8 @@ typedef struct Motor_consts_s {
     const uint8_t mirrorMF;
     const uint8_t mirrorMicroStep1; //mirror microstep1 pin
     const uint8_t mirrorMicroStep2; //mirror microstep2 pin
-    int mirrorsw1; //limit switch pins
-    int mirrorsw2;
+    int mirrorminsw1; //limit switch pins
+    int mirrormaxsw2;
     const float mirrordegmin;
     const float mirrordegmax;
     const int mirrorSPR; //mirror steps per revolution
@@ -108,8 +110,8 @@ struct Motor_consts_s MOTOR_CONSTS = {
     36, //.altStep    alt step pin
     35, //.altDir alt dir pin
     34, //.altMF alt enable pin (enable on low)
-    6, //.altsw1
-    7, //.altsw2 limit switch pins
+    10, //.altminsw1
+    9, //.altmaxsw2 limit switch pins
     0.0, //.altdegmin degree minimum limit
     47.0, //.altdegmax degree maximim limit
     40000, //.altSPR alt steps per revolution
@@ -121,7 +123,7 @@ struct Motor_consts_s MOTOR_CONSTS = {
     39, //.azi Stepazi step pin
     38, //.azi Dirazi dir pin
     37, //.aziMF azi enable pin (enable on low)
-    30,
+    8,
     -1, //.aziSwitches limit switch pins
     -360.0, //.azidegmin
     2*360, //.azidegmax
@@ -136,7 +138,7 @@ struct Motor_consts_s MOTOR_CONSTS = {
     -1, //.mirrorMF
     18, //.mirrorMicroStep1 mirror microstep1 pin
     19, //.mirrorMicroStep2 mirror microstep2 pin
-    31,
+    7,
     -1, //.mirrorSwitches limit switch pins
     0.0, //.mirrordegmin
     45.0, //.mirrordegmax

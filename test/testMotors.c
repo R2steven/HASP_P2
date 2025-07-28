@@ -68,9 +68,10 @@ int main() {
     __builtin_cogstart(runMotors(), motoStack);
 
     char commandALT[45] = {0};
-    sprintf(commandALT,"%d, %d, %.4f\n\0",
+    sprintf(commandALT,"$%d, $%d, $%.4f\n\0",
             ALT_ID, DEG, 90.0
         );
+    printf("%s", commandALT);
 
     char commandAZ[45] = {0};
     sprintf(commandAZ,"%d, %d, %.4f\n\0",
@@ -83,7 +84,7 @@ int main() {
     
     _pinh(56);
     _waitms(1000);
-
+/**
     int itrs = 1;
     while(true) {
         _pinnot(56);
@@ -101,6 +102,6 @@ int main() {
         motors->rxBuff->threadLock = false;
         _waitms(1000);
         itrs++;
-    }
+    }*/
 }
 #endif

@@ -55,6 +55,19 @@ int main() {
         stdhead.hdr.length
     );
 
+    printf("raw:\n%c%c%x%x%x%x%x%x%x%x\n",
+        stdhead.hdrBuff[0],
+        stdhead.hdrBuff[1],
+        stdhead.hdrBuff[4],
+        stdhead.hdrBuff[5],
+        stdhead.hdrBuff[6],
+        stdhead.hdrBuff[7],
+        stdhead.hdrBuff[8],
+        stdhead.hdrBuff[10],
+        stdhead.hdrBuff[11],
+        stdhead.hdrBuff[12]
+    );
+
     Deque notused = {0};
 
     regRxPacket(comms, 1, notUsed, &prxhandler);

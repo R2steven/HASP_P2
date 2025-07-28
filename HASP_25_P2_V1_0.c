@@ -40,13 +40,14 @@ int main() {
 
 
     //run modules
-    uint8_t motoStack[8192];
-    __builtin_cogstart(runMotors(), motoStack);
+    uint8_t motoStack[65536];
+    __builtin_cogstart(runComms(), motoStack);
 
-    uint8_t sensorStack[8192];
+    uint8_t sensorStack[65536];
+    __builtin_cogstart(runSensors(comms), sensorStack);
 
-    //this cog becomes comms thread
-    runComms();
+    //this cog becomes Motor thread
+    runMotors();
 }
 
 #define sensorLen 210
@@ -60,6 +61,6 @@ int runSensors(HASP25_Comms *comms) {
 
 uint16_t SensorTXPHandler(uint8_t *txBuff) {
     getTempMessage(txBuff, 100);
-    //getSteeringMessage(txBuff+101, 100);
+    getDiodeSteeringMessage(txBuff+101, 100);
     return sensorLen;
 }

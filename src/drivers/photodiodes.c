@@ -96,17 +96,17 @@ double getVerticalAngle() {
 int degposition(int idx){
     switch (idx){
         case 0:
-            return -90;
-        case 1:
-            return -45;
-        case 2:
             return 0;
-        case 3:
+        case 1:
             return 45;
-        case 4:
+        case 2:
             return 90;
-        case 5:
+        case 3:
             return 180;
+        case 4:
+            return -90;
+        case 5:
+            return -45;
         default:
             return -1000;
     }
@@ -129,8 +129,12 @@ double getConfidenceValue(int* readings) {
 
 }
 
-int getDiodeSteeringMessage(char *buff, int len) { //TODO: implement me! idk if I want to send double or the string reprisentation
 
+int getDiodeSteeringMessage(char *buff, int len) { //TODO: implement me! idk if I want to send double or the string reprisentation
+    double angle = getHorizontalAngle();
+
+    snprintf(buff,50,"HorizontalSteer: $%.4f", angle);
+    return 50;
 }
 
 /*int main() {
