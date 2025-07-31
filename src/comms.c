@@ -222,7 +222,7 @@ void enqueTXPacket( HASP25_Comms* comms,
  * 11-end       Data        Data
  */
 int8_t rxCheck(HASP25_Comms *comms) {
-    #define timeout 1000
+    #define timeout 4000
     #define maxItrs 256
 
     //zero out header
@@ -242,6 +242,7 @@ int8_t rxCheck(HASP25_Comms *comms) {
     ///////////////////////////////////////////////////
     for(int i = 0; i < maxItrs; i++) {
         currHeader->P = p2comms->rxtixp2(timeout);
+        // printf("%c", currHeader->S);
         if(currHeader->S == 'S' && currHeader->P == 'P') {
             validHeader = true;
             break;
@@ -257,6 +258,7 @@ int8_t rxCheck(HASP25_Comms *comms) {
     //read in valid header
     ///////////////////////////////////////////////////
 
+    _waitms(3);
     unpackHeaderRXCheck(comms->header);
 
     //#define PRINT_HEADER
@@ -311,8 +313,10 @@ int8_t rxCheck(HASP25_Comms *comms) {
         CommsRxPacketHandler phandler = {0};
         getHashMap(&comms->rxHandles, currHeader->type, &phandler);
         phandler.packetHandler(phandler.buff, &comms->buffer[0], currHeader->length);
+        zeroHeader(comms);
         return 1;
     }
+    zeroHeader(comms);
     return 0;
 }
 
@@ -332,6 +336,8 @@ int8_t txCheck(HASP25_Comms *comms) {
     }
     
     uint16_t length = handler.phandler(&comms->buffer[0]);
+
+    length = length < 1 ? 1 : length;
 
     buildHeader(comms, &comms->buffer[0], length, handler.type);
 
@@ -356,6 +362,8 @@ int8_t txCheck(HASP25_Comms *comms) {
     
     p2comms->emitStrp2(txhead,HEADER_SIZE_BYTES);
     p2comms->emitStrp2(&comms->buffer[0], length);
+
+    zeroHeader(comms);
     return 1;
 }
 
@@ -376,7 +384,7 @@ void packHeaderBytes(HASP25_Header_buff * header, uint8_t *txBuff) {
     //byte 9 is length
     txBuff[9] = header->hdrBuff[12];
     //byte 10 is null/unused
-    txBuff[10] = 0;
+    txBuff[10] = '\0';
 }
 
 void unpackHeaderRXCheck(HASP25_Header_buff * header) {
@@ -422,16 +430,51 @@ void zeroHeader(HASP25_Comms *comms) {
 
 void buildHeader(HASP25_Comms *comms, uint8_t *data, uint16_t length, uint8_t type) {
     zeroHeader(comms);
+    uint8_t *headerBuff = (comms->header)->hdrBuff;
+    // printf("Print Header:\nraw bytes:\nstart: %c%c, PID: 0x%x%x%x%x, type: %x, CRC: 0x%x%x, length: %x, overFlow:0x%x%x%x%x\n",
+    //         headerBuff[0],
+    //         headerBuff[1],
+    //         headerBuff[2],
+    //         headerBuff[3],
+    //         headerBuff[4],
+    //         headerBuff[5],
+    //         headerBuff[6],
+    //         headerBuff[7],
+    //         headerBuff[8],
+    //         headerBuff[9],
+    //         headerBuff[10],
+    //         headerBuff[11],
+    //         headerBuff[12],
+    //         headerBuff[13],
+    //         headerBuff[14]
+    //     );
 
     HASP25_Header *hdr = &(comms->header)->hdr;
 
     hdr->S = 'S';
     hdr->P = 'P';
-    hdr->PID = comms->currID;
+    hdr->PID = 0xFFFFFFFF;
     comms->currID++;
     hdr->type = type;
-    hdr->crc = compute_CRC16(&comms->crc, data, length);
+    hdr->crc = 0xFFFF; //compute_CRC16(&comms->crc, data, length);
     hdr->length = length;
+    // printf("Print Header:\nraw bytes:\nstart: %c%c, PID: 0x%x%x%x%x, type: %x, CRC: 0x%x%x, length: %x, overFlow:0x%x%x%x%x\n",
+    //         headerBuff[0],
+    //         headerBuff[1],
+    //         headerBuff[2],
+    //         headerBuff[3],
+    //         headerBuff[4],
+    //         headerBuff[5],
+    //         headerBuff[6],
+    //         headerBuff[7],
+    //         headerBuff[8],
+    //         headerBuff[9],
+    //         headerBuff[10],
+    //         headerBuff[11],
+    //         headerBuff[12],
+    //         headerBuff[13],
+    //         headerBuff[14]
+    //     );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -36,6 +36,6 @@
 #define NO_PACKET -1
 #define COMMS_ID 1
 #define MOTO_ID 2
-#define SENSORS 3
+#define SENSORS_ID 3
 
 #endif

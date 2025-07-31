@@ -133,8 +133,8 @@ double getConfidenceValue(int* readings) {
 int getDiodeSteeringMessage(char *buff, int len) { //TODO: implement me! idk if I want to send double or the string reprisentation
     double angle = getHorizontalAngle();
 
-    snprintf(buff,50,"HorizontalSteer: $%.4f", angle);
-    return 50;
+    int len = snprintf(buff,50,"HorizontalSteer: $%.4f", angle);
+    return len;
 }
 
 /*int main() {

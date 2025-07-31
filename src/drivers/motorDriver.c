@@ -42,6 +42,8 @@ typedef struct Motor{
     int steps_in_rev; //num steps in one revolution as derived from ratio 
                       //and motor steps per revolution
     int stepBuff; //steps to move
+    int homeDir;
+    int dirMod;
     // int LOWER_LIMIT;
     // int UPPER_LIMIT;
 
@@ -58,12 +60,12 @@ typedef struct Motor{
 }Motor_t;
 
 
-void initMotor(struct Motor * motor, int Pin1, int sw1, int sw2,int deg_min, int deg_max, int steps_per_rev, float ratio) {
-    initMotorCstm(motor, Pin1, Pin1 + 1, Pin1 + 2, sw1, sw2, deg_min, deg_max, steps_per_rev, ratio);
+void initMotor(struct Motor * motor, int Pin1, int sw1, int sw2,int deg_min, int deg_max, int steps_per_rev, float ratio, int homeDir, int dirMod) {
+    initMotorCstm(motor, Pin1, Pin1 + 1, Pin1 + 2, sw1, sw2, deg_min, deg_max, steps_per_rev, ratio, homeDir, dirMod);
 }
 
 //Constructor. maximum of 2 limit switches supported.
-void initMotorCstm(struct Motor * motor, int pinSTP, int pinDIR, int pinMF, int sw1, int sw2, int deg_min, int deg_max, int steps_per_rev, float ratio) {
+void initMotorCstm(struct Motor * motor, int pinSTP, int pinDIR, int pinMF, int sw1, int sw2, int deg_min, int deg_max, int steps_per_rev, float ratio , int homeDir, int dirMod) {
 
     motor->PU_PIN = pinSTP;
     motor->DIR_PIN = pinDIR;
@@ -76,6 +78,8 @@ void initMotorCstm(struct Motor * motor, int pinSTP, int pinDIR, int pinMF, int 
     motor->steps_in_rev = (int)(ratio * steps_per_rev);
     set_home(motor);
     motor->stepBuff = 0;
+    motor->homeDir = homeDir;
+    motor->dirMod = dirMod;
 
     //printf("ratio %f, spr %d, sir %d\n", ratio, steps_per_rev, motor->steps_in_rev);
 
@@ -114,20 +118,21 @@ int get_pos(struct Motor * motor) { //get position in steps
 
 //Utility
 void step(struct Motor * motor, int steps) {
-    printf("arrived! stepBuff: %d", motor->stepBuff);
+    // printf("arrived! stepBuff: %d\n\n", motor->stepBuff);
     int dir = 1;
     _dirh(motor->DIR_PIN);
     //printf("steps: %d\n", steps);
+    steps = steps*motor->dirMod;
     int itrs = steps;
     if(steps < 0) {
         _pinh(motor->DIR_PIN);
-        printf("motor_pin: %d, -1\n", motor->PU_PIN);
+        // printf("motor_pin: %d, -1\n", motor->PU_PIN);
         itrs*=-1;
         dir = -1;
     }
     else {
         _pinl(motor->DIR_PIN);
-        printf("motor_pin: %d, 1\n", motor->DIR_PIN);
+        // printf("motor_pin: %d, 1\n", motor->DIR_PIN);
         dir = 1;
     }
 
@@ -136,7 +141,7 @@ void step(struct Motor * motor, int steps) {
 
     int limit = 0;
     for(int i = 0; i < itrs; i++) {
-        limit = -1; //pollSwitches(motor);
+        limit = pollSwitches(motor);
         if(limit > 0 || // check limit switches
             motor->pos + dir*i < motor->minLimit || //check step limits
             motor->pos + dir*i > motor->maxLimit) 
@@ -150,6 +155,7 @@ void step(struct Motor * motor, int steps) {
                 else {
                     motor->stepBuff += i;
                 }
+                motor->stepBuff = 0;
                 return;
             }
         }
@@ -173,9 +179,9 @@ void spin_rev(struct Motor * motor, int revs) {
 
 void update_target_deg(struct Motor * motor, float degs) {
     int steps = degToStep(motor, degs);
-    printf("degrees: %f, steps: %d", degs, steps);
+    // printf("degrees: %f, steps: %d", degs, steps);
     motor->stepBuff += steps;
-    //printf("steps: %d, target: %d", steps, motor->target);
+    // printf("steps: %d, target: %d\n", steps, motor->stepBuff);
 }
 
 void move_toward_target_deg(struct Motor * motor, float degsMax) {
@@ -218,6 +224,7 @@ int degToStep(struct Motor * motor, float degs) {// degs must be between 0,360
 }
 
 void home(struct Motor * motor) { //return to home position
+    motor->stepBuff = 0;
     int steps = -1*((motor->pos)%motor->steps_in_rev); //calculate the steps needed to get back 
     if(steps > motor->steps_in_rev/2) {
         steps = -1*(motor->steps_in_rev-steps);
@@ -229,11 +236,20 @@ void home(struct Motor * motor) { //return to home position
 
 int rehome(struct Motor * motor) {
 
-    _pinh(motor->DIR_PIN); //set direction
+    if(motor->dirMod * motor->homeDir < 0) {
+        _pinh(motor->DIR_PIN); //set direction
+    }
+    else {
+        _pinl(motor->DIR_PIN);
+    }
+    
+    int sw = 0;
 
-    while(pollSwitches(motor) != 1) {
+    while( sw <= 0) {
+        sw = pollSwitches(motor);
         _wypin(motor->PU_PIN,STEP);
         _waitus(DELAY);
+        // printf("Motor pin: %d, sw: %d\n", motor->PU_PIN, sw);
     }
 
     motor->pos = 0;

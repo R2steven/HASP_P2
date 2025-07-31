@@ -38,7 +38,9 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
         MOTOR_CONSTS.altdegmin,
         MOTOR_CONSTS.altdegmax,
         MOTOR_CONSTS.altSPR,
-        MOTOR_CONSTS.altRatio
+        MOTOR_CONSTS.altRatio,
+        MOTOR_CONSTS.altHomeDir,
+        MOTOR_CONSTS.altDirMod
     );
 
     /**
@@ -54,7 +56,9 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
         MOTOR_CONSTS.azidegmin,
         MOTOR_CONSTS.azidegmax,
         MOTOR_CONSTS.aziSPR,
-        MOTOR_CONSTS.aziRatio
+        MOTOR_CONSTS.aziRatio,
+        MOTOR_CONSTS.aziHomeDir,
+        MOTOR_CONSTS.aziDirMod
     );
 
     /**
@@ -70,7 +74,9 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
         MOTOR_CONSTS.mirrordegmin,
         MOTOR_CONSTS.mirrordegmax,
         MOTOR_CONSTS.mirrorSPR,
-        MOTOR_CONSTS.mirrorRatio
+        MOTOR_CONSTS.mirrorRatio,
+        MOTOR_CONSTS.mirHomeDir,
+        MOTOR_CONSTS.mirDirMod
     );
     _pinh(MOTOR_CONSTS.mirrorMicroStep1); //set microstep behavior
     _pinh(MOTOR_CONSTS.mirrorMicroStep2); //set microstep behavior
@@ -81,7 +87,9 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) {
     motorInst->azStack = (uint8_t *) calloc(1028, sizeof(uint8_t));
     motorInst->mirrorStack = (uint8_t *) calloc(1028, sizeof(uint8_t));
 
-    regRxPacket(comms, MOTO_ID, motorInst->commands, &motorRxHandler);
+    initDequeNalloc(&motorInst->commands, 15, sizeof(motorCommand));
+
+    regRxPacket(comms, MOTO_ID, &motorInst->commands, &motorRxHandler);
 
     return motorInst;
 }
@@ -260,7 +268,7 @@ int runMotorold(Motor_t *motor, uint8_t *motRunning, Deque *motCommand) {
                     spin_deg(motor, cmd.degree * cmd.direction);
                     break;
                 case HOME:
-                    home(motor);
+                    rehome(motor);
                     break;
                 case INIT:
                     rehome(motor);
@@ -288,8 +296,9 @@ int runMotors() {
     while(true) {
         cmd.motoId = -1;
 
-        if(motorInst->commands->size > 0) {
-            dqDequeue(motorInst->commands, &cmd);
+        // printf("dq size: %d\n",motorInst->commands->size);
+        if(motorInst->commands.size > 0) {
+            dqDequeue(&motorInst->commands, &cmd);
         }
 
 
@@ -310,22 +319,37 @@ int runMotors() {
             case ALL_CMD:   executeMotocmd(&motorInst->azimuth, &cmd);
                             executeMotocmd(&motorInst->altitude, &cmd);
                             executeMotocmd(&motorInst->mirror, &cmd);
+                            if(cmd.cmd == HOME) {
+                                enqueTXPacket(motorInst->comms, 200, SENSORS_ID, 
+                                    &dumbMotorIsDoneHomingFunctionWhichShouldJustBeAStringButImADumbCoconut);
+                            }
             break;
             case AZ_ID: executeMotocmd(&motorInst->azimuth, &cmd);
+                            if(cmd.cmd == HOME) {
+                                enqueTXPacket(motorInst->comms, 200, SENSORS_ID, 
+                                    &dumbMotorIsDoneHomingFunctionWhichShouldJustBeAStringButImADumbCoconut);
+                            }
             break;
             case ALT_ID: executeMotocmd(&motorInst->altitude, &cmd);
+                            if(cmd.cmd == HOME) {
+                                enqueTXPacket(motorInst->comms, 200, SENSORS_ID, 
+                                    &dumbMotorIsDoneHomingFunctionWhichShouldJustBeAStringButImADumbCoconut);
+                            }
             break;
             case MIR_ID: executeMotocmd(&motorInst->mirror, &cmd);
+                            if(cmd.cmd == HOME) {
+                                enqueTXPacket(motorInst->comms, 200, SENSORS_ID, 
+                                    &dumbMotorIsDoneHomingFunctionWhichShouldJustBeAStringButImADumbCoconut);
+                            }
             break;
             case -1://do nothing, no command enqueued;
             default:;
             break;
         }
 
-        move_toward_target_deg(&(motorInst->altitude), 1);
-        move_toward_target_deg(&(motorInst->azimuth), 1);
-        move_toward_target_deg(&(motorInst->mirror), 1);
-
+        move_toward_target_deg(&(motorInst->altitude), .5);
+        move_toward_target_deg(&(motorInst->azimuth), .5);
+        move_toward_target_deg(&(motorInst->mirror), .5);
     }
 }
 
@@ -336,6 +360,7 @@ int runMotor(Motor_t *motor) {
 }
 
 void executeMotocmd(Motor_t *motor, motorCommand *cmd) {
+    // printf("%d\n",cmd->cmd);
     switch(cmd->cmd) {
         // case DEG: readDEGstr(&cmd, input, &curr, length);
         // break;
@@ -343,7 +368,19 @@ void executeMotocmd(Motor_t *motor, motorCommand *cmd) {
         // break;
         // case STEPDIR: readSTEPDIRstr(&cmd, input, &curr, length);
         // break;
-        case HOME: rehome(motor);
+        case HOME: 
+            rehome(motor);
+
+            if(motor == &(motorInst->altitude)) {
+                motorInst->altHomed = true;
+            }
+            else if(motor == &(motorInst->azimuth)) {
+                motorInst->azHomed = true;
+            }
+            else if(motor == &(motorInst->mirror)) {
+                motorInst->mirHomed = true;
+            }
+            
         break;
         case DEGDIR: update_target_deg(motor, cmd->degree*cmd->direction);
         break;
@@ -354,6 +391,9 @@ void executeMotocmd(Motor_t *motor, motorCommand *cmd) {
 }
 
 uint8_t motorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length) {
+    // for(int i = 0; i < length; i++) {
+    //     printf("%c", input[i]);
+    // }
     motorCommand cmd = {0};
     cmd.cmd = -1;
 
@@ -365,6 +405,7 @@ uint8_t motorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length) {
     curr = scanForParam(input, curr, length);
     cmd.cmd = atoi(&input[++curr]);
 
+    // printf("%d\n", cmd.cmd);
     switch(cmd.cmd) {
         // case DEG: readDEGstr(&cmd, input, &curr, length);
         // break;
@@ -374,14 +415,15 @@ uint8_t motorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length) {
         // break;
         case HOME: //do nothing;
         break;
-        case DEGDIR: readDEGDIRstr(&cmd, input, &curr, length);
+        case DEGDIR: readDEGDIRstr(&cmd, input, curr, length);
         break;
         case -1: printf("no command sent!");
         default:
         break;
     }
 
-    dqEnqueue(motorInst->commands, &cmd);
+    dqEnqueue(&motorInst->commands, &cmd);
+    // printf("%d, %d, %f, %d\n\n", cmd.motoId, cmd.cmd, cmd.degree, cmd.direction);
 }
 
 void readDEGstr(motorCommand *ret, uint8_t* input, uint16_t *curr, uint16_t length) {
@@ -407,19 +449,157 @@ void readSTEPDIRstr(motorCommand *ret, uint8_t* input, uint16_t *curr, uint16_t 
     ret->direction = atoi(&input[*curr]);
 }
 
-void readDEGDIRstr(motorCommand *ret, uint8_t* input, uint16_t *curr, uint16_t length) {
-    *curr = scanForParam(input, *curr, length);
-    *curr++;
-    ret->step = atof(&input[*curr]);
-    *curr = scanForParam(input, *curr, length);
-    *curr++;
-    ret->direction = atoi(&input[*curr]);
+void readDEGDIRstr(motorCommand *ret, uint8_t* input, uint16_t curr, uint16_t length) {
+    // printf("%d\n",length);
+    curr = scanForParam(input, curr, length);
+    curr++;
+    ret->degree = atof(&input[curr]);
+    // printf("%c, %d\n", input[*curr], *curr);
+    curr = scanForParam(input, curr, length);
+    curr++;
+    ret->direction = atoi(&input[curr]);
+    // printf("%c, %d\n\n", input[*curr], *curr);
 }
 
 uint16_t scanForParam(uint8_t* input, uint16_t curr, uint16_t length) {
+    // printf("%d, %d\n", length, curr);
     for(uint16_t i = curr; i < length; i++) {
         if (input[i] == '$') {
+            // printf("%d\n\n",i);
             return i;
         }
+    }
+}
+
+uint16_t dumbMotorIsDoneHomingFunctionWhichShouldJustBeAStringButImADumbCoconut(uint8_t *txBuff) {
+    int len = snprintf(txBuff, 200, "command: $%d, altHomed: $%d, azHomed: $%d, mirHomed $%d",HOME, motorInst->altHomed, motorInst->azHomed, motorInst->mirHomed);
+    motorInst->altHomed = false;
+    motorInst->azHomed = false;
+    motorInst->mirHomed = false;
+    return len;
+}
+
+uint8_t testMir() {
+    motorCommand mirCmd = {MIR_ID, DEGDIR, 0, 0, 1};
+    mirCmd.degree = -36.0;
+    dqEnqueue(&motorInst->commands, &mirCmd);
+    mirCmd.degree = 0.0;
+}
+
+uint8_t testLoop() {
+    
+    motorCommand allHome = {ALL_CMD, HOME, 0, 0, 1};
+    motorCommand altCmd = {ALT_ID, DEGDIR, 0, 0, 1};
+    motorCommand azCmd = {AZ_ID, DEGDIR, 0, 0, 1};
+    motorCommand mirCmd = {MIR_ID, DEGDIR, 0, 0, 1};
+
+    dqEnqueue(&motorInst->commands, &allHome);
+    _waitms(30000);
+    // printf("arrived!\n");
+    motorInst->altHomed = 0;
+    motorInst->azHomed = 0;
+    motorInst->mirHomed = 0;
+    
+    altCmd.degree = 20.0;
+    dqEnqueue(&motorInst->commands, &altCmd);
+    altCmd.degree = 0.0;
+
+    azCmd.degree = -100.0;
+    dqEnqueue(&motorInst->commands, &azCmd);
+    azCmd.degree = 0.0;
+
+    mirCmd.degree = -36.0;
+    dqEnqueue(&motorInst->commands, &mirCmd);
+    mirCmd.degree = 0.0;
+
+    _waitms(200);
+    printf("moter stepBuff: alt: %d, az: %d, mir: %d\n", 
+        motorInst->altitude.stepBuff,
+        motorInst->azimuth.stepBuff,
+        motorInst->mirror.stepBuff);
+
+    _waitms(30000);
+    printf("moter stepBuff: alt: %d, az: %d, mir: %d\n", 
+        motorInst->altitude.stepBuff,
+        motorInst->azimuth.stepBuff,
+        motorInst->mirror.stepBuff);
+
+    altCmd.degree = 10.0;
+    dqEnqueue(&motorInst->commands, &altCmd);
+    altCmd.degree = 0.0;
+
+    printf("moter stepBuff: alt: %d, az: %d, mir: %d\n", 
+        motorInst->altitude.stepBuff,
+        motorInst->azimuth.stepBuff,
+        motorInst->mirror.stepBuff);
+
+    while(true) {
+        altCmd.degree = 10.0;
+        dqEnqueue(&motorInst->commands, &altCmd);
+        altCmd.degree = 0.0;
+        _waitms(500);
+
+        azCmd.degree = 180.0;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        azCmd.degree = 0.0;
+        _waitms(500);
+
+        mirCmd.degree = -1.4;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        mirCmd.degree = 0.0;
+
+        _waitms(30000);
+
+        altCmd.degree = -20.0;
+        dqEnqueue(&motorInst->commands, &altCmd);
+        altCmd.degree = 0.0;
+        _waitms(500);
+
+        azCmd.degree = -360.0;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        azCmd.degree = 0.0;
+        _waitms(500);
+
+        mirCmd.degree = -1.4;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        mirCmd.degree = 0.0;
+
+        _waitms(30000);
+
+        altCmd.degree = 10.0;
+        dqEnqueue(&motorInst->commands, &altCmd);
+        altCmd.degree = 0.0;
+        _waitms(500);
+
+        azCmd.degree = 180.0;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        azCmd.degree = 0.0;
+        _waitms(500);
+
+        mirCmd.degree = -1.4;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        mirCmd.degree = 0.0;
+        _waitms(500);
+
+        dqEnqueue(&motorInst->commands, &allHome);
+        _waitms(30000);
+        motorInst->altHomed = 0;
+        motorInst->azHomed = 0;
+        motorInst->mirHomed = 0;
+
+        altCmd.degree = 20.0;
+        dqEnqueue(&motorInst->commands, &altCmd);
+        altCmd.degree = 0.0;
+
+        azCmd.degree = -100.0;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        azCmd.degree = 0.0;
+
+        mirCmd.degree = -36.0;
+        dqEnqueue(&motorInst->commands, &azCmd);
+        mirCmd.degree = 0.0;
+
+        printf("finished test loop!");
+        _waitms(120000);
     }
 }

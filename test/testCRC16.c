@@ -10,6 +10,12 @@ int main() {
     uint8_t input[2] = {0x51, 0x00};
     uint16_t final = 0x1373;
 
+    CRC16 *test = &crc;
+
+    if(test == &crc) {
+        printf("true");
+    }
+    
     uint16_t out = compute_CRC16(&crc, input, 2);
 
     printf("Expected: 0x%x, Got: 0x%x", final, out);

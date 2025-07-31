@@ -1,6 +1,7 @@
 #include <propeller.h>
 #include <stdio.h>
 
+
 #include "config.h"
 
 // we only need to support P2, 
@@ -38,6 +39,8 @@ int main() {
     photoDiode_start();
     therm_start();
 
+    Deque *notUsed = {0};
+    regRxPacket(comms, SENSORS_ID, notUsed, &sensorRxHandler);
 
     //run modules
     uint8_t motoStack[65536];
@@ -46,21 +49,39 @@ int main() {
     uint8_t sensorStack[65536];
     __builtin_cogstart(runSensors(comms), sensorStack);
 
+    uint8_t testFuncStack[65536];
+    __builtin_cogstart(testLoop(), testFuncStack);
+
     //this cog becomes Motor thread
     runMotors();
 }
 
 #define sensorLen 210
 int runSensors(HASP25_Comms *comms) {
+    uint8_t type = SENSORS_ID;
     while(true) {
-        enqueTXPacket(comms, sensorLen, SENSORS, &SensorTXPHandler);
+        enqueTXPacket(comms, sensorLen, type, &SensorTXPHandler);
+        //enqueTXPacket(comms, sensorLen, 2, &motorTx);
         _waitms(50);
     }
     return 1;
 }
 
 uint16_t SensorTXPHandler(uint8_t *txBuff) {
-    getTempMessage(txBuff, 100);
-    getDiodeSteeringMessage(txBuff+101, 100);
-    return sensorLen;
+    //getTempMessage(txBuff, 100);
+    int len = getDiodeSteeringMessage(txBuff, 100);
+    txBuff[++len] = '\n';
+    txBuff[++len] = '\0';
+    return len;
+}
+
+uint8_t sensorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length) {
+    // for(int i = 0; i < length; i++) {
+    //     printf("%c",input[i]);
+    // }
+    // printf('\n');
+}
+
+uint16_t motorTx(uint8_t *txBuff) {
+    return snprintf(txBuff, 100, "MotorID $181, Command $4, Degrees $10.0000, Direction $1\0");
 }

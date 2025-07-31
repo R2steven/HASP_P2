@@ -52,7 +52,7 @@ typedef struct HASP25Motors_s {
     Motor_t altitude; // altitude motor
     Motor_t azimuth; // azimuth motor
     Motor_t mirror; // mirror motor
-    Deque *commands; // motor command queue
+    Deque commands; // motor command queue
     HASP25_Comms *comms; // comms module
     uint8_t *altStack;
     uint8_t *azStack;
@@ -60,6 +60,9 @@ typedef struct HASP25Motors_s {
     uint8_t altRunning;
     uint8_t azRunning;
     uint8_t mirrorRunning;
+    uint8_t altHomed;
+    uint8_t azHomed;
+    uint8_t mirHomed;
 }HASP25Motors_t;
 
 typedef struct Motor_consts_s {
@@ -75,6 +78,8 @@ typedef struct Motor_consts_s {
     const float altdegmax; //degree maximim limit
     const int altSPR; //alt steps per revolution
     const float altRatio; //3 to 1 gear Ratio (gear down)
+    const int altHomeDir; //direction to home in
+    const int altDirMod; //direction mod to config
 
     /////////////////////
     // Azimuth constants M4
@@ -88,6 +93,8 @@ typedef struct Motor_consts_s {
     const float azidegmax;
     const int aziSPR; //azi steps per revolution
     const float aziRatio; //6 to 1 gear Ratio (gear down)
+    const int aziHomeDir; //direction to home in
+    const int aziDirMod; //direction mod to config
 
     /////////////////////
     // Instrument Mirror constants
@@ -103,6 +110,8 @@ typedef struct Motor_consts_s {
     const float mirrordegmax;
     const int mirrorSPR; //mirror steps per revolution
     const float mirrorRatio; //60 to 1 gear Ratio (gear down)
+    const int mirHomeDir; //direction to home in
+    const int mirDirMod; //direction mod to config
 
 }Motor_consts_t;
 
@@ -116,6 +125,8 @@ struct Motor_consts_s MOTOR_CONSTS = {
     47.0, //.altdegmax degree maximim limit
     40000, //.altSPR alt steps per revolution
     3, //.altRatio 3 to 1 gear Ratio (gear down)
+    -1, //direction to home in
+    -1, //direction mod to config
 
     /////////////////////
     // Azimuth constants M4
@@ -129,6 +140,8 @@ struct Motor_consts_s MOTOR_CONSTS = {
     2*360, //.azidegmax
     40000, //.aziSPR azi steps per revolution
     6, //.aziRatio 6 to 1 gear Ratio (gear down)
+    1, //direction to home in
+    -1, //direction mod to config
 
     /////////////////////
     // Instrument Mirror constants
@@ -143,7 +156,9 @@ struct Motor_consts_s MOTOR_CONSTS = {
     0.0, //.mirrordegmin
     45.0, //.mirrordegmax
     3200, //.mirrorSPR mirror steps per revolution
-    60 //.mirrorRatio 60 to 1 gear Ratio (gear down)
+    60, //.mirrorRatio 60 to 1 gear Ratio (gear down)
+    -1, //direction to home in
+    -1, //direction mod to config
 };
 
 /**
@@ -156,6 +171,8 @@ HASP25Motors_t *initMotors(HASP25_Comms *comms) __fromfile("src/motors.c");
  * enter the motor control loop. intended to be run as a thread
  */
 int runMotors() __fromfile("src/motors.c"); 
+
+uint8_t testLoop() __fromfile("src/motors.c"); 
 
 uint8_t motorRxHandler(Deque* notUsed, uint8_t* input, uint16_t length)__fromfile("src/motors.c");
 #endif
